@@ -1,0 +1,12 @@
+master_hostname=test55
+slave_hostname=test58
+#the account of allowing the slave node to copy bin-log from master node.
+master_grant_username=root
+master_grant_password=root1234
+#the usernames and passwords  of connecting mysql
+master_mysql_connect_username=root
+master_mysql_connect_password=root1234
+slave_mysql_connect_username=root
+slave_mysql_connect_password=root1234
+master_mysql_remote_connect_username=root
+master_mysql_remote_connect_password=root1234
