@@ -1,1 +1,1 @@
-修改linux中的rm命令，当删除一个文件的时候，会同时拷贝一个副本到指定文件夹下。
+a revision of built-in command鈥攔m ,when you delete a file(not a directory),it will copy the file to a directory,and remove the file.this way ,you can backup the file when you delete.
