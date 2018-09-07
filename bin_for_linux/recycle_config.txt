@@ -1,2 +1,0 @@
-1、把newrm.sh 和rm_config.sh拷贝到同一个文件夹中。
-2、运行source rm_config.sh。
