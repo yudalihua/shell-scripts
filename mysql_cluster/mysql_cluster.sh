@@ -8,6 +8,7 @@
     #confirm present user has the right to write the directory of /etc.because if sed modify a file ,it will first create a temporary file in the directory.
 #list of configuration parameters
 
+#问题在于加上了这个读取文件的内容，虽然也会给变量正确赋值，但是后边对比的时候就对比不成功了？？？
 config_file="`dirname $0`/cluster.cfg"
 [ -f $config_file ] || { echo "The config file <$config_file> doesn't exists!"; exit 1; }
 master_hostname=`cat $config_file|grep -v "^#"|grep -w "master_hostname"|awk -F= '{print$2}'`
@@ -20,6 +21,8 @@ slave_mysql_connect_password=`cat $config_file|grep -v "^#"|grep -w "slave_mysql
 slave_mysql_connect_username=`cat $config_file|grep -v "^#"|grep -w "slave_mysql_connect_username"|awk -F= '{print$2}'`
 master_mysql_remote_connect_username=`cat $config_file|grep -v "^#"|grep -w "master_mysql_remote_connect_username"|awk -F= '{print$2}'`
 master_mysql_remote_connect_password=`cat $config_file|grep -v "^#"|grep -w "master_mysql_remote_connect_password"|awk -F= '{print$2}'`
+
+
 
 
 #list of global variables
@@ -77,7 +80,6 @@ then
     fi
 fi
 
-
 #check the account who is starting mysql,and restart mysql.only the owner of mysql or root can restart the mysql
 function restart_mysql {
 	cd "`locate -r mysqladmin$| xargs -i dirname {}`"
@@ -98,7 +100,6 @@ function restart_mysql {
         fi
     elif [ "$present_user" == "root" ]
     then
-       
         if [ -f $mysql_base_dir/mysqld ]
         then
             cd $mysql_base_dir
@@ -120,7 +121,7 @@ function restart_mysql {
     exit 1
     fi
 }
-restart_mysql &>/dev/null
+restart_mysql &>/dev/null 
 
 #connect mysql
 
@@ -198,7 +199,8 @@ function configure_mysql_master {
     if [ $code4 -eq 0 ]
     then
 
-        sed  -ir 's/(\s)*server[_-]id(\s)*=.*/server_id = 1/' /etc/my.cnf
+        awk -F= '$1~/server[_-]id/{i++;if(i<2){$1="";$2="server_id=1";}else{exit}}1' /etc/my.cnf 1<>/etc/my.cnf
+    
     else
 
         sed -i '/\[mysqld\]/a\server_id = 1' /etc/my.cnf
@@ -237,14 +239,16 @@ function configure_mysql_slave {
         sed -i '/\[mysqld\]/a\skip_name_resolve=ON' /etc/my.cnf
     fi
 
-    cat /etc/my.cnf|grep -E '(\s)*server-id(\s)*' &>/dev/null
+    cat /etc/my.cnf|grep -v "\#" |grep -E '(\s)*server[_-]id(\s)*' &>/dev/null
     code4=$?
     if [ $code4 -eq 0 ]
     then
-        sed  -ir 's/(\s)*server-id(\s)*=.*/server-id = 2/' /etc/my.cnf
-    else
-        sed -i '/\[mysqld\]/a\server-id = 2' /etc/my.cnf
 
+        awk -F= '$1~/server[_-]id/{i++;if(i<2){$1="";$2="server_id=2";}else{exit}}1' /etc/my.cnf 1<>/etc/my.cnf
+   
+    else
+
+        sed -i '/\[mysqld\]/a\server_id = 2' /etc/my.cnf
     fi
 
     cat /etc/my.cnf|grep -E '(\s)*innodb_file_per_table(\s)*' &>/dev/null
@@ -332,3 +336,7 @@ EOF
 
 fi
 echo "finished"
+
+
+#如果不能实现主从节点的原因是server_id冲突，需要把除了/etc/my.cnf外的所有my.cnf删除。
+#把两个节点分别都当做主节点和从节点执行一次，就实现了双主复制。可能配置文件中少了一些参数。
