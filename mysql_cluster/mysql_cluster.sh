@@ -8,7 +8,7 @@
     #confirm present user has the right to write the directory of /etc.because if sed modify a file ,it will first create a temporary file in the directory.
 #list of configuration parameters
 
-#问题在于加上了这个读取文件的内容，虽然也会给变量正确赋值，但是后边对比的时候就对比不成功了？？？
+
 config_file="`dirname $0`/cluster.cfg"
 [ -f $config_file ] || { echo "The config file <$config_file> doesn't exists!"; exit 1; }
 master_hostname=`cat $config_file|grep -v "^#"|grep -w "master_hostname"|awk -F= '{print$2}'`
