@@ -1,2 +1,2 @@
 # shell-scripts
-automate linux work with shell scripts. 
+make your work with linux/unix administration more effectively with shell scripts. 
